@@ -45,8 +45,7 @@ else
 fi
 
 # Write .env
-echo "NUM_GPUS=${NUM_GPUS}" >> .env
-echo "MODEL_DIR=${MODEL_DIR}/${MODEL}-${NUM_GPUS}gpu" >> .env
+echo "NUM_GPUS=${NUM_GPUS}" > .env
 echo "API_EXTERNAL_PORT=${API_EXTERNAL_PORT}" >> .env
 echo "TRITON_HOST=${TRITON_HOST}" >> .env
 echo "TRITON_PORT=${TRITON_PORT}" >> .env
@@ -78,7 +77,8 @@ function fastertransformer_backend(){
         *) MODEL="codegen-6B-multi" ;;
     esac
 
-    echo "MODEL=${MODEL}" > .env
+    echo "MODEL=${MODEL}" >> .env
+    echo "MODEL_DIR=${MODEL_DIR}/${MODEL}-${NUM_GPUS}gpu" >> .env
 
     if (test -d "$MODEL_DIR"/"${MODEL}"-"${NUM_GPUS}"gpu ); then
       echo "$MODEL_DIR"/"${MODEL}"-"${NUM_GPUS}"gpu
@@ -154,7 +154,8 @@ function python_backend(){
     fi
 
     # Write config.env
-    echo "MODEL=py-${MODEL}" > config.env
+    echo "MODEL=py-${MODEL}" >> config.env
+    echo "MODEL_DIR=${MODEL_DIR}/${MODEL}-${NUM_GPUS}gpu" >> .env
     echo "HF_CACHE_DIR=${HF_CACHE_DIR}" >> config.env
 
     # Create model directory

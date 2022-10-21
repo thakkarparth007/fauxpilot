@@ -41,4 +41,5 @@ config = template.substitute(
 )
 with open(os.path.join(model_dir_path, '../config.pbtxt'), 'w') as f:
     f.write(config)
-    print(f"Config written to")
+
+print(f"Model initialized")
