@@ -13,18 +13,16 @@ from transformers import AutoTokenizer
 def pb2torch(request, name):
     tensor = pb_utils.get_input_tensor_by_name(request, name)
     return torch.from_numpy(tensor.as_numpy())
-    # return from_dlpack(tensor.to_dlpack())
 
 
 def torch2pb(name, tensor):
     return pb_utils.Tensor(name, tensor.numpy())
-    # return pb_utils.Tensor.from_dlpack(name, to_dlpack(tensor))
 
 
 class TritonPythonModel:
     def initialize(self, args):
         self.model_config = model_config = json.loads(args["model_config"])
-        org_name = model_config["parameters"].get("org_name", {"string_value": "Salesforce"})["string_value"]
+        org_name = model_config["parameters"]["org_name"]["string_value"]
         model_name = org_name + "/" + model_config["parameters"]["model_name"]["string_value"]
 
         def get_bool(x):

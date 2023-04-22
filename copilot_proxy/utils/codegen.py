@@ -1,20 +1,23 @@
+import os
 import json
 import random
 import string
 import time
 
 import numpy as np
-import tritonclient.grpc as client_util
+#import tritonclient.grpc as client_util
+import tritonclient.http.aio as client_util
 from tokenizers import Tokenizer
 from tritonclient.utils import np_to_triton_dtype, InferenceServerException
 
 np.finfo(np.dtype("float32"))
 np.finfo(np.dtype("float64"))
 
+my_dir=os.path.dirname(__file__)
 
 class CodeGenProxy:
-    def __init__(self, host: str = 'triton', port: int = 8001, verbose: bool = False):
-        self.tokenizer = Tokenizer.from_file('/python-docker/cgtok/tokenizer.json')
+    def __init__(self, host: str = 'localhost', port: int = 8000, verbose: bool = False):
+        self.tokenizer = Tokenizer.from_file(my_dir + '/../cgtok/tokenizer.json')
         self.client = client_util.InferenceServerClient(url=f'{host}:{port}', verbose=verbose)
         self.PAD_CHAR = 50256
 
@@ -72,7 +75,7 @@ class CodeGenProxy:
 
         return np.array([flat_ids, offsets], dtype="int32").transpose((1, 0, 2))
 
-    def generate(self, data):
+    async def generate(self, data):
         prompt = data['prompt']
         n = data.get('n', 1)
         model_name = data["model"]
@@ -154,7 +157,7 @@ class CodeGenProxy:
             self.prepare_tensor("stop_words_list", stop_word_list),
         ]
 
-        result = self.client.infer(model_name, inputs)
+        result = await self.client.infer(model_name, inputs)
 
         output_data = result.as_numpy("output_ids")
         if output_data is None:
@@ -242,10 +245,10 @@ class CodeGenProxy:
         completion['choices'] = choices
         return json.dumps(completion)
 
-    def __call__(self, data: dict):
+    async def __call__(self, data: dict):
         st = time.time()
         try:
-            completion, choices = self.generate(data)
+            completion, choices = await self.generate(data)
         except InferenceServerException as exc:
             # status: unavailable -- this happens if the `model` string is invalid
             print(exc)

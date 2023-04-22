@@ -21,7 +21,7 @@ function check_dep(){
 }
 check_dep curl
 check_dep zstd
-check_dep docker
+#check_dep docker
 
 ############### Common configuration ###############
 
@@ -112,6 +112,7 @@ function fastertransformer_backend(){
         curl -L "https://huggingface.co/moyix/${MODEL}-gptj/resolve/main/${MODEL}-${NUM_GPUS}gpu.tar.zst" \
             -o "$ARCHIVE"
         zstd -dc "$ARCHIVE" | tar -xf - -C "${MODELS_ROOT_DIR}"
+        ln -s ~/.local/tritonserver/backends/fastertransformer/libtriton_fastertransformer.so ${MODELS_ROOT_DIR}/$DEST/fastertransformer/libtriton_fastertransformer.so
         rm -f "$ARCHIVE"
       else
         echo "Downloading and converting the model, this will take a while..."
@@ -131,6 +132,8 @@ function python_backend(){
     echo "[2] codegen-350M-multi (1GB total VRAM required; multi-language)"
     echo "[3] codegen-2B-mono (4GB total VRAM required; Python-only)"
     echo "[4] codegen-2B-multi (4GB total VRAM required; multi-language)"
+    echo "[5] santacoder (5GB total VRAM required; Python/JS/Java)"
+    echo "[6] custom HF model (not all models may work. Most decoder-only models should work.)"
 
     read -rp "Enter your choice [4]: " MODEL_NUM
 
@@ -140,7 +143,11 @@ function python_backend(){
         2) MODEL="codegen-350M-multi"; ORG="Salesforce" ;;
         3) MODEL="codegen-2B-mono"; ORG="Salesforce" ;;
         4) MODEL="codegen-2B-multi"; ORG="Salesforce" ;;
-        *) MODEL="codegen-2B-multi"; ORG="Salesforce" ;;
+        5) MODEL="santacoder"; ORG="bigcode" ;;
+        6) read -rp "Enter your model name (e.g., bigcode/santacoder): " MODEL;
+              ORG=$(echo "$MODEL" | cut -d'/' -f1);
+              MODEL=$(echo "$MODEL" | cut -d'/' -f2) ;;
+        *) echo "Invalid choice"; exit 1 ;;
     esac
 
     # share huggingface cache? Should be safe to share, but permission issues may arise depending upon your docker setup

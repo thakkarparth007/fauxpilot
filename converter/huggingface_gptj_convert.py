@@ -25,8 +25,8 @@ import sys
 from transformers import GPTJForCausalLM
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(dir_path + "/../../../..")
-sys.path.append(dir_path)
+#sys.path.append(dir_path + "/../../../..")
+#sys.path.append(dir_path)
 
 
 def get_weight_data_type(data_type):
@@ -123,7 +123,6 @@ def split_and_convert(args):
         "mlp.dense_4h_to_h.weight",
     ]
 
-    torch.multiprocessing.set_start_method("spawn")
     pool = multiprocessing.Pool(args.processes)
     for name, param in model.named_parameters():
         if name.find("weight") == -1 and name.find("bias") == -1:
@@ -192,4 +191,5 @@ if __name__ == "__main__":
         print("{}: {}".format(key, vars(args)[key]))
     print("========================================")
 
+    torch.multiprocessing.set_start_method("spawn")
     split_and_convert(args)

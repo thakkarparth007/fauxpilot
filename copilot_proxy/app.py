@@ -8,7 +8,8 @@ from sse_starlette.sse import EventSourceResponse
 
 from config.log_config import uvicorn_logger
 from models import OpenAIinput
-from utils.codegen import CodeGenProxy
+#from utils.codegen import CodeGenProxy
+from codegen_triton import CodeGenProxy
 from utils.errors import FauxPilotException
 
 logging.config.dictConfig(uvicorn_logger)
@@ -53,7 +54,7 @@ def get_copilot_token():
 async def completions(data: OpenAIinput):
     data = data.dict()
     try:
-        content = codegen(data=data)
+        content = await codegen(data=data)
     except codegen.TokensExceedsMaximum as E:
         raise FauxPilotException(
             message=str(E),

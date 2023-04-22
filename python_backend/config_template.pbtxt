@@ -8,6 +8,11 @@ input [
     dims: [ -1 ]
   },
   {
+    name: "suffix_input_ids"
+    data_type: TYPE_INT32
+    dims: [ -1 ]
+  },
+  {
     # UNUSED
     name: "start_id"
     data_type: TYPE_INT32
