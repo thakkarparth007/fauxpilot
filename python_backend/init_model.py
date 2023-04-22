@@ -17,6 +17,9 @@ parser.add_argument("--model_name", type=str, required=True)
 parser.add_argument("--org_name", type=str, required=True)
 parser.add_argument("--use_half", type=str, default="1")
 parser.add_argument("--use_int8", type=str, default="0")
+parser.add_argument("--use_deepspeed", type=str, default="0")
+parser.add_argument("--use_kernel_injection", type=str, default="0")
+parser.add_argument("--num_gpus", type=int, default=1)
 parser.add_argument("--use_auto_device_map", type=str, default="1")
 args = parser.parse_args()
 
@@ -37,6 +40,9 @@ config = template.substitute(
     model_name=args.model_name,
     use_half=args.use_half,
     use_int8=args.use_int8,
+    use_deepspeed=args.use_deepspeed,
+    use_kernel_injection=args.use_kernel_injection,
+    num_gpus=args.num_gpus,
     use_auto_device_map=args.use_auto_device_map,
 )
 with open(os.path.join(model_dir_path, '../config.pbtxt'), 'w') as f:

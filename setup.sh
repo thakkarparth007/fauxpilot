@@ -161,12 +161,25 @@ function python_backend(){
         USE_INT8="1"
     fi
 
+    USE_DEEPSPEED="0"
+    USE_KERNEL_INJECTION="0"
+    read -rp "Do you want to use deepspeed to use multiple-gpus for speedup? (Caveat: currently incompatible with int8) y/n [n]: " _USE_DEEPSPEED
+    if [[ ! $_USE_DEEPSPEED =~ ^[Nn]$ ]]; then
+        USE_DEEPSPEED="1"
+
+        read -rp "Do you want to use kernel injection with deepspeed? (Caveat: cannot handle batched inference yet) y/n [n]: " _USE_KERNEL_INJECTION
+
+        if [[ ! $_USE_KERNEL_INJECTION =~ ^[Nn]$ ]]; then
+            USE_KERNEL_INJECTION="1"
+        fi
+    fi
+
     # Write config.env
     echo "MODEL=py-${MODEL}" >> .env
     echo "MODEL_DIR=${MODELS_ROOT_DIR}/py-${ORG}-${MODEL}" >> .env  # different format from fastertransformer backend
     echo "HF_CACHE_DIR=${HF_CACHE_DIR}" >> .env
 
-    python3 ./python_backend/init_model.py --model_name "${MODEL}" --org_name "${ORG}" --model_dir "${MODELS_ROOT_DIR}" --use_int8 "${USE_INT8}"
+    python3 ./python_backend/init_model.py --model_name "${MODEL}" --org_name "${ORG}" --model_dir "${MODELS_ROOT_DIR}" --use_int8 "${USE_INT8}" --use_deepspeed "${USE_DEEPSPEED}" --use_kernel_injection "${USE_KERNEL_INJECTION}" --num_gpus "${NUM_GPUS}" 
     bash -c "source .env ; docker compose build || docker-compose build"
 }
 

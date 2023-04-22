@@ -178,3 +178,21 @@ parameters {
     string_value: "${use_auto_device_map}" # e.g. "0" or "1"
   }
 }
+parameters {
+  key: "use_deepspeed",
+  value: {
+    string_value: "${use_deepspeed}" # e.g. "0" or "1"
+  }
+}
+parameters {
+  key: "use_kernel_injection",
+  value: {
+    string_value: "${use_kernel_injection}" # e.g. "0" or "1"
+  }
+}
+parameters {
+  key: "num_gpus",
+  value: {
+    string_value: "${num_gpus}" # e.g. "1"
+  }
+}

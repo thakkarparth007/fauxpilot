@@ -8,6 +8,7 @@ import triton_python_backend_utils as pb_utils
 # from torch.utils.dlpack import to_dlpack, from_dlpack
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
+import deepspeed
 
 
 def pb2torch(request, name):
@@ -34,6 +35,15 @@ class TritonPythonModel:
         # This will make inference marginally slower, but will allow bigger models to fit in GPU
         int8 = get_bool("use_int8") and torch.cuda.is_available()
         auto_device_map = get_bool("use_auto_device_map") and torch.cuda.is_available()
+        low_cpu_mem_usage = True
+        num_gpus = int(model_config["parameters"].get("num_gpus", {"string_value": "1"})["string_value"])
+        use_deepspeed = get_bool("use_deepspeed")
+        use_kernel_injection = get_bool("use_kernel_injection")
+
+        if use_deepspeed:
+            int8 = False
+            auto_device_map = False
+            low_cpu_mem_usage = False
 
         print("Cuda available?", torch.cuda.is_available())
         print(f"is_half: {is_half}, int8: {int8}, auto_device_map: {auto_device_map}")
@@ -41,11 +51,23 @@ class TritonPythonModel:
             model_name,
             torch_dtype=torch.float16 if is_half else ("auto" if torch.cuda.is_available() else torch.float32),
             load_in_8bit=int8,
-            device_map="auto" if auto_device_map else None,
-            low_cpu_mem_usage=True,
+            device_map="auto" if auto_device_map else None, # ignores num_gpus :(
+            low_cpu_mem_usage=low_cpu_mem_usage,
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         print(f"Model {model_name} Loaded. Footprint: {self.model.get_memory_footprint()}")
+
+        if use_deepspeed:
+            print("Using deepspeed on", num_gpus, "GPUs")
+            print("Kernel injection?", use_kernel_injection)
+            self.model = deepspeed.init_inference(
+                self.model,
+                mp_size=num_gpus,
+                dtype=torch.float16 if is_half else ("auto" if torch.cuda.is_available() else torch.float32),
+                replace_method="auto",
+                replace_with_kernel_inject=use_kernel_injection,
+            )
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         # set max_batch_size
         self.max_batch_size = 0  # model_config["max_batch_size"]
